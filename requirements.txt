@@ -1,0 +1,6 @@
+
+streamlit
+thermo
+chemicals
+pandas
+numpy
