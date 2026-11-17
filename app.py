@@ -1,12 +1,9 @@
 
 import streamlit as st
-from thermo import Chemical
+from PROJET import calcul
 
-st.set_page_config(
-    page_title="Thermo",
-    page_icon="🌡️",
-    layout="centered"
-)
+# Configuration
+st.set_page_config(page_title="Thermo", page_icon="🌡️")
 
 # Protection par mot de passe
 def login():
@@ -25,6 +22,7 @@ def login():
         else:
             st.error("Mot de passe incorrect.")
 
+
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
@@ -32,55 +30,107 @@ if not st.session_state["authenticated"]:
     login()
     st.stop()
 
+
 # Application Thermo
 st.title("🌡️ Thermo")
 st.subheader("Recherche des propriétés thermodynamiques")
 
 st.write(
-    "Entrez le nom d'une molécule "
-    "pour déterminer sa température d'ébullition."
+    "Entrez le nom d'une molécule pour calculer "
+    "sa température d'ébullition selon la pression."
 )
 
 molecule = st.text_input(
     "Nom de la molécule :",
-    placeholder="Exemple : Water, Ethanol, Benzene"
+    placeholder="Water, Ethanol, Benzene..."
 )
 
-if st.button("Rechercher", type="primary"):
+st.write("### Conditions de calcul")
+
+unites = {
+    "Pa": 1.0,
+    "kPa": 1000.0,
+    "bar": 100000.0,
+    "atm": 101325.0,
+    "mmHg": 133.322
+}
+
+unite = st.selectbox(
+    "Unité de pression :",
+    list(unites.keys()),
+    index=3
+)
+
+pression = st.number_input(
+    "Valeur de la pression :",
+    min_value=0.001,
+    value=1.0,
+    step=0.1
+)
+
+if st.button("Calculer", type="primary"):
 
     if molecule.strip():
 
         try:
-            produit = Chemical(molecule.strip())
+            P = pression * unites[unite]
 
-            if produit.Tb is not None:
-                temperature_k = produit.Tb
-                temperature_c = temperature_k - 273.15
+            resultat, erreur = calcul(molecule.strip(), P)
 
-                st.success("Molécule trouvée !")
-                st.write("### Résultats")
-
-                st.metric(
-                    "Température d'ébullition",
-                    f"{temperature_c:.2f} °C"
-                )
-
-                st.metric(
-                    "Température en Kelvin",
-                    f"{temperature_k:.2f} K"
-                )
+            if erreur:
+                st.error(erreur)
 
             else:
-                st.warning(
-                    "Température d'ébullition non disponible."
-                )
+                st.success("Molécule trouvée !")
 
-        except Exception:
-            st.error(
-                "Molécule introuvable. Vérifiez son nom."
-            )
+                st.write("### Informations sur la molécule")
+                st.write("**Nom :**", resultat["nom"])
+                st.write("**Formule :**", resultat["formule"])
+                st.write("**CAS :**", resultat["CAS"])
+
+                st.write("### Résultats")
+
+                if resultat["tb_1atm"] is not None:
+                    tb1 = resultat["tb_1atm"]
+
+                    st.metric(
+                        "Température d'ébullition à 1 atm",
+                        f"{tb1 - 273.15:.2f} °C"
+                    )
+
+                    st.write(
+                        f"Température en Kelvin : {tb1:.2f} K"
+                    )
+
+                    st.caption(resultat["source_1atm"])
+
+                if resultat["tb"] is not None:
+
+                    tb = resultat["tb"]
+
+                    st.metric(
+                        "Température d'ébullition à la pression choisie",
+                        f"{tb - 273.15:.2f} °C"
+                    )
+
+                    st.write(
+                        f"Température en Kelvin : {tb:.2f} K"
+                    )
+
+                    st.info(
+                        f"Méthode utilisée : {resultat['methode']}"
+                    )
+
+                else:
+                    st.warning(
+                        "Calcul impossible à cette pression."
+                    )
+
+        except Exception as e:
+            st.error(f"Erreur de calcul : {e}")
 
     else:
         st.warning("Veuillez entrer le nom d'une molécule.")
 
+ 
  
