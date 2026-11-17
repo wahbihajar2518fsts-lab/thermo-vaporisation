@@ -1,6 +1,6 @@
 
 import streamlit as st
-from PROJET import calcul
+from projet import calcul
 
 # Configuration
 st.set_page_config(page_title="Thermo", page_icon="🌡️")
