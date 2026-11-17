@@ -80,37 +80,3 @@ def calcul(nom, P=P_ATM):
         T, methode = tb_clausius(mol, tb1, est, P)
     resultat["tb"], resultat["methode"] = T, methode
     return resultat, None
-
-
-# ----------------- Programme principal -----------------
-UNITES = {"pa": 1.0, "kpa": 1e3, "bar": 1e5, "atm": P_ATM, "mmhg": 133.322}
-
-while True:
-    nom = input("\nMolécule (nom/formule/CAS) ou 'q' pour quitter : ").strip()
-    if nom.lower() == "q":
-        break
-
-    p_txt = input("Pression (ex: 1 atm, 0.5 bar, 760 mmHg) [Entrée = 1 atm] : ").strip()
-    P = P_ATM
-    if p_txt:
-        try:
-            val, unite = p_txt.split()
-            P = float(val) * UNITES[unite.lower()]
-        except Exception:
-            print("Format invalide -> pression de 1 atm utilisée.")
-
-    res, erreur = calcul(nom, P)
-    if erreur:
-        print(erreur)
-        continue
-
-    print("\n--- Résultat ---")
-    print(f"Molécule : {res['nom']}  ({res['formule']}, CAS {res['CAS']})")
-    if res["tb_1atm"] is not None:
-        print(f"Tb à 1 atm : {res['tb_1atm']:.2f} K = {res['tb_1atm']-273.15:.2f} °C"
-              f"  [{res['source_1atm']}]")
-    if res["tb"] is not None and abs(P - P_ATM) >= 1:
-        print(f"Tb à {P/1000:.2f} kPa : {res['tb']:.2f} K = {res['tb']-273.15:.2f} °C"
-              f"  [{res['methode']}]")
-    if res["tb"] is None:
-        print("Calcul impossible pour cette molécule.")
